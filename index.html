@@ -511,6 +511,31 @@
             font-size: 0.9rem;
         }
         
+        .team-members {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .team-member {
+            text-align: center;
+        }
+        
+        .member-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #4fc3f7;
+            margin-bottom: 5px;
+        }
+        
+        .member-quote {
+            font-size: 0.8rem;
+            color: #81d4fa;
+            font-style: italic;
+        }
+        
         /* Responsive improvements */
         @media (max-width: 768px) {
             .resource-controls, .relationship-controls, .scenario-buttons, .action-buttons {
@@ -523,6 +548,11 @@
             
             .concepts {
                 grid-template-columns: 1fr;
+            }
+            
+            .team-members {
+                flex-direction: column;
+                gap: 20px;
             }
         }
         
@@ -722,6 +752,16 @@
         
         <div class="footer">
             <p>Advanced Deadlock Detection Simulator | Operating Systems Project | Interactive Learning Showcase</p>
+            <div class="team-members">
+                <div class="team-member">
+                    <div class="member-name">Tushar Bisht</div>
+                    <div class="member-quote">"One step ahead"</div>
+                </div>
+                <div class="team-member">
+                    <div class="member-name">Keshav Maheshwari</div>
+                    <div class="member-quote">"Innovating the future"</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1005,233 +1045,4 @@
             drawGraph();
             
             addStep('Loaded deadlock scenario: Circular wait between P1→R1→P2→R2→P1');
-            addStep('This represents a classic deadlock where P1 holds R1 and needs R2, while P2 holds R2 and needs R1');
-        }
-
-        // Load a safe scenario
-        function loadSafeScenario() {
-            resetScenario();
-            
-            // Add processes and resources
-            addNode('P1', 'process');
-            addNode('P2', 'process');
-            addNode('R1', 'resource');
-            addNode('R2', 'resource');
-            
-            // Create a safe allocation
-            graph.edges.push({ from: 'P1', to: 'R1', type: 'allocation' });
-            graph.edges.push({ from: 'P2', to: 'R2', type: 'allocation' });
-            graph.edges.push({ from: 'R1', to: 'P2', type: 'request' });
-            
-            positionNodes();
-            updateDropdowns();
-            drawGraph();
-            
-            addStep('Loaded safe scenario: No circular wait detected');
-            addStep('P2 is requesting R1, but there is no circular dependency that would cause a deadlock');
-        }
-
-        // Load a complex scenario
-        function loadComplexScenario() {
-            resetScenario();
-            
-            // Add processes and resources
-            addNode('P1', 'process');
-            addNode('P2', 'process');
-            addNode('P3', 'process');
-            addNode('R1', 'resource');
-            addNode('R2', 'resource');
-            addNode('R3', 'resource');
-            
-            // Create a complex graph
-            graph.edges.push({ from: 'P1', to: 'R1', type: 'allocation' });
-            graph.edges.push({ from: 'P2', to: 'R2', type: 'allocation' });
-            graph.edges.push({ from: 'P3', to: 'R3', type: 'allocation' });
-            graph.edges.push({ from: 'R1', to: 'P2', type: 'request' });
-            graph.edges.push({ from: 'R2', to: 'P3', type: 'request' });
-            graph.edges.push({ from: 'R3', to: 'P1', type: 'request' });
-            
-            positionNodes();
-            updateDropdowns();
-            drawGraph();
-            
-            addStep('Loaded complex scenario: Multiple processes and resources');
-            addStep('This scenario demonstrates a more complex resource allocation graph with three processes and three resources');
-        }
-
-        // Reset the scenario
-        function resetScenario() {
-            graph = { nodes: [], edges: [] };
-            document.getElementById('algorithm-steps').innerHTML = '';
-            document.getElementById('status-message').className = 'status-message status-safe';
-            document.getElementById('status-message').innerHTML = '<span>✅</span> System Status: Safe';
-            document.getElementById('resolution-options').style.display = 'none';
-            drawGraph();
-            addStep('Scenario reset. Graph is empty.');
-        }
-
-        // Detect deadlock using graph reduction algorithm
-        function detectDeadlock() {
-            addStep('Starting deadlock detection...');
-            
-            // Create a copy of the graph for reduction
-            const workGraph = JSON.parse(JSON.stringify(graph));
-            let changed = true;
-            let safe = true;
-            
-            // Remove any existing deadlock highlighting
-            document.querySelectorAll('.deadlock-detected').forEach(node => {
-                node.classList.remove('deadlock-detected');
-            });
-            
-            while (changed) {
-                changed = false;
-                
-                // Find processes that are not blocked (no outgoing request edges)
-                for (let i = 0; i < workGraph.nodes.length; i++) {
-                    const node = workGraph.nodes[i];
-                    
-                    if (node.type === 'process') {
-                        // Check if this process has any request edges
-                        const hasRequests = workGraph.edges.some(edge => 
-                            edge.from === node.id && edge.type === 'request');
-                        
-                        if (!hasRequests) {
-                            // This process is not blocked, remove it and its allocation edges
-                            addStep(`Process ${node.id} is not blocked, removing from graph...`);
-                            
-                            // Remove allocation edges from this process
-                            workGraph.edges = workGraph.edges.filter(edge => 
-                                !(edge.from === node.id && edge.type === 'allocation'));
-                            
-                            // Remove the process node
-                            workGraph.nodes.splice(i, 1);
-                            i--; // Adjust index after removal
-                            changed = true;
-                        }
-                    }
-                }
-            }
-            
-            // If there are any processes left, we have a deadlock
-            const remainingProcesses = workGraph.nodes.filter(node => node.type === 'process');
-            if (remainingProcesses.length > 0) {
-                safe = false;
-                addStep(`DEADLOCK DETECTED! Processes involved: ${remainingProcesses.map(p => p.id).join(', ')}`);
-                addStep('The system is in an unsafe state. Processes cannot proceed due to circular waiting.');
-                
-                // Highlight deadlocked processes in the graph
-                remainingProcesses.forEach(process => {
-                    const nodeElement = document.getElementById(`node-${process.id}`);
-                    if (nodeElement) {
-                        nodeElement.classList.add('deadlock-detected');
-                    }
-                });
-                
-                document.getElementById('status-message').className = 'status-message status-deadlock';
-                document.getElementById('status-message').innerHTML = '<span>🚨</span> System Status: DEADLOCK DETECTED!';
-            } else {
-                addStep('No deadlock detected. System is in a safe state.');
-                addStep('All processes can eventually obtain the resources they need.');
-                document.getElementById('status-message').className = 'status-message status-safe';
-                document.getElementById('status-message').innerHTML = '<span>✅</span> System Status: Safe';
-            }
-            
-            return !safe;
-        }
-
-        // Show resolution options
-        function showResolutionOptions() {
-            // First detect if there's actually a deadlock
-            const hasDeadlock = detectDeadlock();
-            
-            if (!hasDeadlock) {
-                addStep('No deadlock to resolve. System is already in a safe state.');
-                document.getElementById('resolution-options').style.display = 'none';
-                return;
-            }
-            
-            // Show resolution options
-            document.getElementById('resolution-options').style.display = 'grid';
-            addStep('Select a resolution method to break the deadlock:');
-        }
-
-        // Resolve deadlock with different strategies
-        function resolveDeadlock(strategy) {
-            addStep(`Applying ${strategy} resolution strategy...`);
-            
-            // Hide resolution options
-            document.getElementById('resolution-options').style.display = 'none';
-            
-            // Get deadlocked processes
-            const deadlockedProcesses = graph.nodes.filter(node => 
-                node.type === 'process' && 
-                document.getElementById(`node-${node.id}`).classList.contains('deadlock-detected')
-            );
-            
-            if (deadlockedProcesses.length === 0) {
-                addStep('No deadlocked processes found. System may already be safe.');
-                return;
-            }
-            
-            // Apply selected resolution strategy
-            switch(strategy) {
-                case 'terminate':
-                    // Terminate the first deadlocked process
-                    const processToTerminate = deadlockedProcesses[0];
-                    addStep(`Terminating process ${processToTerminate.id} to break the deadlock...`);
-                    removeNode(processToTerminate.id);
-                    addStep(`Process ${processToTerminate.id} terminated. Deadlock resolved.`);
-                    break;
-                    
-                case 'preempt':
-                    // Preempt a resource from the first deadlocked process
-                    const processToPreempt = deadlockedProcesses[0];
-                    // Find an allocation edge from this process
-                    const allocationEdge = graph.edges.find(edge => 
-                        edge.from === processToPreempt.id && edge.type === 'allocation'
-                    );
-                    
-                    if (allocationEdge) {
-                        addStep(`Preempting resource ${allocationEdge.to} from process ${processToPreempt.id}...`);
-                        // Remove the allocation edge
-                        graph.edges = graph.edges.filter(edge => 
-                            !(edge.from === processToPreempt.id && edge.to === allocationEdge.to && edge.type === 'allocation')
-                        );
-                        drawGraph();
-                        addStep(`Resource ${allocationEdge.to} preempted from process ${processToPreempt.id}. Deadlock resolved.`);
-                    } else {
-                        addStep(`No resources allocated to process ${processToPreempt.id}. Trying alternative resolution.`);
-                        // Fall back to termination
-                        removeNode(processToPreempt.id);
-                        addStep(`Process ${processToPreempt.id} terminated. Deadlock resolved.`);
-                    }
-                    break;
-                    
-                case 'rollback':
-                    // Rollback the first deadlocked process (simulate)
-                    const processToRollback = deadlockedProcesses[0];
-                    addStep(`Rolling back process ${processToRollback.id} to a previous safe state...`);
-                    // Remove all edges associated with this process
-                    graph.edges = graph.edges.filter(edge => 
-                        edge.from !== processToRollback.id && edge.to !== processToRollback.id
-                    );
-                    drawGraph();
-                    addStep(`Process ${processToRollback.id} rolled back. Deadlock resolved.`);
-                    break;
-            }
-            
-            addStep('Verifying system state after resolution...');
-            // Check if system is now safe
-            detectDeadlock();
-        }
-
-        // Initialize the application
-        window.onload = function() {
-            initializeGraph();
-            addStep('Advanced Deadlock Detection Simulator initialized. Load a scenario to begin!');
-            addStep('This simulator demonstrates deadlock detection using the resource allocation graph method.');
-        };
-    </script>
-</body>
-</html>
+            addStep('This represents a classic deadlock where P1 holds R1 and needs R2
