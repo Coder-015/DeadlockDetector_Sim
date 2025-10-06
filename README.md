@@ -3,6 +3,7 @@ This project presents an interactive educational simulator for understanding dea
 
 # Website
 https://coder-015.github.io/DeadlockDetector_Sim/
+
 # Technology Stack
 
 We built the simulator using modern web technologies:
