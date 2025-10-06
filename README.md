@@ -1,6 +1,8 @@
 # DeadlockDetector_Sim
 This project presents an interactive educational simulator for understanding deadlocks in operating systems. Unlike traditional theoretical approaches, our simulator provides a visual, hands-on learning experience that demonstrates deadlock detection, prevention, and resolution through an intuitive graphical interface. The system implements real-time algorithm visualization, making complex OS concepts accessible and engaging for students.
 
+# Website
+https://coder-015.github.io/DeadlockDetector_Sim/
 # Technology Stack
 
 We built the simulator using modern web technologies:
